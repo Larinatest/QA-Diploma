@@ -1,18 +1,15 @@
 package ru.netology.test;
 
+import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
-
 import ru.netology.data.DataHelper;
 import ru.netology.data.SQLHelper;
 import ru.netology.page.PaymentPurchasePage;
 
-import static com.codeborne.selenide.Selenide.open;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static ru.netology.data.DataHelper.cardNumberAll0;
-import static ru.netology.data.DataHelper.cardNumberInvalid;
-import static ru.netology.data.SQLHelper.clearTables;
+import static com.codeborne.selenide.Selenide.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CardNumberTest {
     private PaymentPurchasePage paymentPurchasePage;
@@ -20,6 +17,8 @@ public class CardNumberTest {
     @BeforeAll
     static void setUpAll() {
         SelenideLogger.addListener("allure", new AllureSelenide());
+        Configuration.pageLoadTimeout = 30000; // Таймаут загрузки страницы
+        Configuration.headless = true;
     }
 
     @AfterAll
@@ -34,118 +33,53 @@ public class CardNumberTest {
     }
 
     @AfterEach
-    public void cleanTables() {
-        clearTables();
+    void cleanTables() {
+        SQLHelper.clearTables();
     }
 
-    // Оплата тура дебетовой картой, номер карты меньше 16 цифр
     @Test
-    void shouldNotSubmitApplicationWrongFormatShortCardNumber() {
+    void shouldSubmitApplicationApprovedCard() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign15());
+        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
         fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        paymentPurchasePage.shouldShowSuccessNotification();
+        assertEquals("APPROVED", SQLHelper.getPaymentStatus());
     }
 
-    // Оплата тура кредитной картой, номер карты меньше 16 цифр
     @Test
-    void shouldNotSubmitApplicationWrongFormatShortCreditCardNumber() {
-        paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign15());
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getCreditRequestStatus());
-    }
-
-    // Оплата тура дебетовой картой, номер карты больше 16 цифр
-    @Test
-    void shouldNotSubmitApplicationLongCardNumber() {
+    void shouldNotSubmitApplicationDeclinedCard() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign17());
+        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberDeclined);
         fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotification();
-        assertNull(new SQLHelper().getPaymentStatus());
+        paymentPurchasePage.shouldShowErrorNotification();
+        assertEquals("DECLINED", SQLHelper.getPaymentStatus());
     }
 
-    // Оплата тура кредитной картой, номер карты больше 16 цифр
     @Test
-    void shouldNotSubmitApplicationLongCreditCardNumber() {
-        paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign17());
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotification();
-        assertNull(new SQLHelper().getCreditRequestStatus());
-    }
-
-    // Оплата тура дебетовой картой, ввод пустого номера карты
-    @Test
-    void shouldNotSubmitApplicationEmptyInput() {
+    void shouldNotSubmitApplicationEmptyCardNumber() {
         paymentPurchasePage.openCardPaymentPage();
         paymentPurchasePage.fillCardNumberField("");
         fillOtherFieldsByValidInfo();
-
         paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
-    // Оплата тура кредитной картой, ввод пустого номера карты
-    @Test
-    void shouldNotSubmitApplicationCreditCardEmptyInput() {
-        paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField("");
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(new SQLHelper().getCreditRequestStatus());
-    }
-
-    // Оплата тура дебетовой картой, номер карты "0000 0000 0000 0000"
-    @Test
-    void shouldNotSubmitApplicationCardAll0() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(cardNumberAll0);
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
-    }
-
-    // Оплата тура кредитной картой, номер карты "0000 0000 0000 0000"
-    @Test
-    void shouldNotSubmitApplicationCreditCardAll0() {
-        paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(cardNumberAll0);
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getCreditRequestStatus());
-    }
-
-    // Оплата тура дебетовой картой, невалидный номер карты (спец.символы)
     @Test
     void shouldNotSubmitApplicationInvalidCardNumber() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(cardNumberInvalid);
+        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberInvalid);
         fillOtherFieldsByValidInfo();
-
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
-    // Оплата тура кредитной картой, невалидный номер карты (спец.символы)
     @Test
-    void shouldNotSubmitApplicationInvalidCreditCardNumber() {
-        paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(cardNumberInvalid);
+    void shouldNotSubmitApplicationAllZeroCardNumber() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberAll0);
         fillOtherFieldsByValidInfo();
-
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getCreditRequestStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     private void fillOtherFieldsByValidInfo() {

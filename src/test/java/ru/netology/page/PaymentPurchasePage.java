@@ -18,7 +18,6 @@ public class PaymentPurchasePage {
     private final SelenideElement ownerField = $(byText("Владелец")).parent().$(".input__control");
     private final SelenideElement cvcField = $(".input [placeholder='123']");
     private final SelenideElement continueButton = $(byText("Продолжить"));
-
     private final SelenideElement notification = $("div.notification_visible  div.notification__content");
     private final SelenideElement wrongFormat = $(byText("Неверный формат"));
     private final SelenideElement invalidCard = $(byText("Неверно указан срок действия карты"));
@@ -57,7 +56,7 @@ public class PaymentPurchasePage {
         continueButton.click();
     }
 
-    public void shouldHaveSuccessNotification() {
+    public void shouldShowSuccessNotification() {
         notification.shouldBe(Condition.text("Успешно.Операция одобрена Банком."), Duration.ofSeconds(15));
     }
 
@@ -81,4 +80,7 @@ public class PaymentPurchasePage {
         requiredField.shouldHave(Condition.text("Поле обязательно для заполнения"));
     }
 
+    public void shouldShowErrorNotification() {
+        notification.shouldBe(Condition.text("Ошибка! Банк отказал в проведении операции."), Duration.ofSeconds(15));
+    }
 }

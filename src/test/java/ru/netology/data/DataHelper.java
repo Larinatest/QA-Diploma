@@ -20,19 +20,13 @@ public class DataHelper {
     public static final String cvcInvalid = "*/1";
     public static final String longCvcNumber = "1234";
 
-    public static String getCardNumberSign15() {
-        Faker faker = new Faker();
-        return faker.number().digits(15);
+    public static String getLongOwnerName() {
+        return "A".repeat(300);
     }
 
     public static String getCardNumberSign16() {
         Faker faker = new Faker();
         return faker.number().digits(16);
-    }
-
-    public static String getCardNumberSign17() {
-        Faker faker = new Faker();
-        return faker.number().digits(17);
     }
 
     public static String getMonth(int shift) {
@@ -72,5 +66,15 @@ public class DataHelper {
         Faker faker = new Faker();
         return faker.number().digits(3);
     }
-}
 
+    public static String getCardNumberSign15() {
+        Faker faker = new Faker();
+        return faker.number().digits(15);
+    }
+
+    public static String getCardNumberSign17() {
+        Faker faker = new Faker();
+        return faker.number().digits(17);
+    }
+
+}

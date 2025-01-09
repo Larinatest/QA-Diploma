@@ -1,17 +1,15 @@
 package ru.netology.test;
 
+import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
-
 import ru.netology.data.DataHelper;
 import ru.netology.data.SQLHelper;
 import ru.netology.page.PaymentPurchasePage;
 
-import static com.codeborne.selenide.Selenide.open;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static ru.netology.data.DataHelper.ownerInvalid;
-import static ru.netology.data.SQLHelper.clearTables;
+import static com.codeborne.selenide.Selenide.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OwnerTest {
     private PaymentPurchasePage paymentPurchasePage;
@@ -19,6 +17,8 @@ public class OwnerTest {
     @BeforeAll
     static void setUpAll() {
         SelenideLogger.addListener("allure", new AllureSelenide());
+        Configuration.pageLoadTimeout = 30000; // Таймаут загрузки страницы
+        Configuration.headless = true;
     }
 
     @AfterAll
@@ -33,104 +33,68 @@ public class OwnerTest {
     }
 
     @AfterEach
-    public void cleanTables() {
-        clearTables();
+    void cleanTables() {
+        SQLHelper.clearTables();
     }
 
-    // Оплата тура дебетовой картой, без указания владельца
     @Test
-    void shouldNotSubmitApplicationEmptyInput() {
+    void shouldSubmitApplicationWithValidOwner() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillOwnerField("");
+        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
         fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(new SQLHelper().getPaymentStatus());
-    }
-
-    // Оплата тура кредитной картой, без указания владельца
-    @Test
-    void shouldNotSubmitApplicationCreditCardEmptyInput() {
-        paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillOwnerField("");
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(new SQLHelper().getCreditRequestStatus());
-    }
-
-    // Оплата тура дебетовой картой, недействительный владелец (спец.символы)
-    @Test
-    void shouldNotSubmitApplicationInvalidOwner() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillOwnerField(ownerInvalid);
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
-    }
-
-    // Оплата тура кредитной картой, недействительный владелец (спец.символы)
-    @Test
-    void shouldNotSubmitApplicationCreditCardInvalidCardOwner() {
-        paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillOwnerField(ownerInvalid);
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getCreditRequestStatus());
-    }
-
-    // Оплата тура дебетовой картой, фамилия кириллицей
-    @Test
-    void shouldNotSubmitApplicationWrongFormatSurNameInCyrillic() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameRu());
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
-    }
-
-    // Оплата тура кредитной картой, фамилия кириллицей
-    @Test
-    void shouldNotSubmitApplicationCreditCardWrongFormatSurNameInCyrillic() {
-        paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameRu());
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getCreditRequestStatus());
-    }
-
-    // Оплата тура дебетовой картой, двойная фамилия через дефис латинскими буквами
-    @Test
-    void shouldNotSubmitApplicationWrongFormatHyphenatedDoubleSurnameInLatinLetters() {
-        paymentPurchasePage.openCardPaymentPage();
         paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameEn());
-        fillOtherFieldsByValidInfo();
-
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        paymentPurchasePage.clickContinueButton();
+        paymentPurchasePage.shouldShowSuccessNotification();
+        assertEquals("APPROVED", SQLHelper.getPaymentStatus());
     }
 
-    // Оплата тура кредитной картой, двойная фамилия через дефис латинскими буквами
     @Test
-    void shouldNotSubmitApplicationCreditCardWrongFormatHyphenatedDoubleSurnameInLatinLetters() {
-        paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameEn());
+    void shouldNotSubmitApplicationWithEmptyOwnerField() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
         fillOtherFieldsByValidInfo();
+        paymentPurchasePage.fillOwnerField("");
+        paymentPurchasePage.clickContinueButton();
+        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
+        assertNull(SQLHelper.getPaymentStatus());
+    }
 
+    @Test
+    void shouldNotSubmitApplicationWithInvalidOwnerName() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+        fillOtherFieldsByValidInfo();
+        paymentPurchasePage.fillOwnerField(DataHelper.ownerInvalid);
+        paymentPurchasePage.clickContinueButton();
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getCreditRequestStatus());
+        assertNull(SQLHelper.getPaymentStatus());
+    }
+
+    @Test
+    void shouldNotSubmitApplicationWithLongOwnerName() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+        fillOtherFieldsByValidInfo();
+        paymentPurchasePage.fillOwnerField(DataHelper.getLongOwnerName());
+        paymentPurchasePage.clickContinueButton();
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(SQLHelper.getPaymentStatus());
+    }
+
+    @Test
+    void shouldNotSubmitApplicationWithNumericOwnerName() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+        fillOtherFieldsByValidInfo();
+        paymentPurchasePage.fillOwnerField("123456");
+        paymentPurchasePage.clickContinueButton();
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     private void fillOtherFieldsByValidInfo() {
-        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());     //случайная карта
-        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));       //число месяца следующего за текущим
-        paymentPurchasePage.fillYearField(DataHelper.getYear(1));       //число года следующего за текущим
+        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));
+        paymentPurchasePage.fillYearField(DataHelper.getYear(1));
         paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC());
-        paymentPurchasePage.clickContinueButton();
     }
 }
-

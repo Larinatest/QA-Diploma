@@ -12,8 +12,8 @@ import java.sql.SQLException;
 public class SQLHelper {
     private static final String user = "app";
     private static final String password = "pass";
-    private final QueryRunner runner = new QueryRunner();
-    private final Connection conn = getConnection();
+    private static final QueryRunner runner = new QueryRunner();
+    private static final Connection conn = getConnection();
 
     public SQLHelper() {
     }
@@ -50,7 +50,7 @@ public class SQLHelper {
     }
 
     @SneakyThrows
-    public String getPaymentStatus() {
+    public static String getPaymentStatus() {
         var status = "SELECT status FROM payment_entity ORDER BY created DESC";
         try {
             return runner.query(conn, status, new ScalarHandler<>());
