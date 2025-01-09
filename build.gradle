@@ -24,7 +24,7 @@ repositories {
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
-    testImplementation 'mysql:mysql-connector-java:8.0.29'
+    testImplementation 'mysql:mysql-connector-j:8.2.0'
     testImplementation 'com.codeborne:selenide:6.15.0'
     testImplementation 'com.github.javafaker:javafaker:1.0.2'
     testImplementation 'commons-dbutils:commons-dbutils:1.7'
