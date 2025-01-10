@@ -1,15 +1,19 @@
 package ru.netology.test;
 
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.logevents.SelenideLogger;
+
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
 import ru.netology.data.DataHelper;
 import ru.netology.data.SQLHelper;
 import ru.netology.page.PaymentPurchasePage;
 
-import static com.codeborne.selenide.Selenide.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.codeborne.selenide.Selenide.open;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import static ru.netology.data.DataHelper.cardNumberApproved;
+import static ru.netology.data.DataHelper.cardNumberDeclined;
+import static ru.netology.data.SQLHelper.clearTables;
 
 public class CardPaymentTest {
     private PaymentPurchasePage paymentPurchasePage;
@@ -17,8 +21,6 @@ public class CardPaymentTest {
     @BeforeAll
     static void setUpAll() {
         SelenideLogger.addListener("allure", new AllureSelenide());
-        Configuration.pageLoadTimeout = 30000; // Таймаут загрузки страницы
-        Configuration.headless = true;
     }
 
     @AfterAll
@@ -33,53 +35,52 @@ public class CardPaymentTest {
     }
 
     @AfterEach
-    void cleanTables() {
-        SQLHelper.clearTables();
+    public void cleanTables() {
+        clearTables();
     }
 
+    // Оплата тура дебетовой картой, со статусом "APPROVED"
     @Test
-    void shouldSubmitApplicationApprovedPayment() {
+    void shouldApproveBuyingTourCardApproved() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+        paymentPurchasePage.fillCardNumberField(cardNumberApproved);
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.shouldShowSuccessNotification();
-        assertEquals("APPROVED", SQLHelper.getPaymentStatus());
+
+        paymentPurchasePage.shouldHaveSuccessNotification();
+        assertEquals("APPROVED", new SQLHelper().getPaymentStatus());
     }
 
+    // Оплата тура кредитной картой, со статусом "APPROVED"
     @Test
-    void shouldNotSubmitApplicationDeclinedPayment() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberDeclined);
+    void shouldApproveBuyingTourCreditCardApproved() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillCardNumberField(cardNumberApproved);
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.shouldShowErrorNotification();
-        assertEquals("DECLINED", SQLHelper.getPaymentStatus());
+
+        paymentPurchasePage.shouldHaveSuccessNotification();
+        assertEquals("APPROVED", new SQLHelper().getCreditRequestStatus());
     }
 
+    // Оплата тура дебетовой картой, со статусом "DECLINED"
     @Test
-    void shouldNotSubmitApplicationEmptyPayment() {
+    void shouldDeclinedBuyingTourCardDeclined() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField("");
+        paymentPurchasePage.fillCardNumberField(cardNumberDeclined);
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(SQLHelper.getPaymentStatus());
+
+        paymentPurchasePage.shouldHaveErrorNotification();
+        assertEquals("DECLINED", new SQLHelper().getPaymentStatus());
     }
 
+    //Оплата тура кредитной картой, со статусом "DECLINED"
     @Test
-    void shouldNotSubmitApplicationInvalidPayment() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberInvalid);
+    void shouldDeclinedBuyingTourCreditCardDeclined() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillCardNumberField(cardNumberDeclined);
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
-    }
 
-    @Test
-    void shouldNotSubmitApplicationPaymentWithZeroCard() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberAll0);
-        fillOtherFieldsByValidInfo();
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
+        paymentPurchasePage.shouldHaveErrorNotification();
+        assertEquals("DECLINED", new SQLHelper().getCreditRequestStatus());
     }
 
     private void fillOtherFieldsByValidInfo() {

@@ -1,15 +1,17 @@
 package ru.netology.test;
 
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
+
 import ru.netology.data.DataHelper;
 import ru.netology.data.SQLHelper;
 import ru.netology.page.PaymentPurchasePage;
 
-import static com.codeborne.selenide.Selenide.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.codeborne.selenide.Selenide.open;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static ru.netology.data.DataHelper.*;
+import static ru.netology.data.SQLHelper.clearTables;
 
 public class MonthTest {
     private PaymentPurchasePage paymentPurchasePage;
@@ -17,8 +19,6 @@ public class MonthTest {
     @BeforeAll
     static void setUpAll() {
         SelenideLogger.addListener("allure", new AllureSelenide());
-        Configuration.pageLoadTimeout = 30000; // Таймаут загрузки страницы
-        Configuration.headless = true;
     }
 
     @AfterAll
@@ -33,62 +33,144 @@ public class MonthTest {
     }
 
     @AfterEach
-    void cleanTables() {
-        SQLHelper.clearTables();
+    public void cleanTables() {
+        clearTables();
     }
 
+    // Оплата тура дебетовой картой, номер месяца меньше двух цифр
     @Test
-    void shouldSubmitApplicationWithValidMonth() {
+    void shouldNotSubmitApplicationWrongFormatOneDigitMonth() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
-        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));
+        paymentPurchasePage.fillMonthField(DataHelper.getOneNumber());
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.shouldShowSuccessNotification();
-        assertEquals("APPROVED", SQLHelper.getPaymentStatus());
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getPaymentStatus());
     }
 
+    // Оплата тура кредитной картой, номер месяца меньше двух цифр
     @Test
-    void shouldNotSubmitApplicationWithEmptyMonth() {
+    void shouldNotSubmitApplicationWrongFormatCreditCardOneDigitMonth() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillMonthField(DataHelper.getOneNumber());
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, номер месяца больше двух цифр (123)
+    @Test
+    void shouldNotSubmitApplicationLongMonthNumber() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+        paymentPurchasePage.fillMonthField(longMonthInvalid);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotification();
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, номер месяца больше двух цифр (123)
+    @Test
+    void shouldNotSubmitApplicationCreditCardLongMonthNumber() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillMonthField(longMonthInvalid);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotification();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+    // Оплата тура дебетовой картой, ввод номера пустого месяца
+    @Test
+    void shouldNotSubmitApplicationEmptyInput() {
+        paymentPurchasePage.openCardPaymentPage();
         paymentPurchasePage.fillMonthField("");
         fillOtherFieldsByValidInfo();
+
         paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(SQLHelper.getPaymentStatus());
+        assertNull(new SQLHelper().getPaymentStatus());
     }
 
+    // Оплата тура кредитной картой, ввод номера пустого месяца
     @Test
-    void shouldNotSubmitApplicationWithNonExistentMonth() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
-        paymentPurchasePage.fillMonthField(DataHelper.nonExistentMonthNumber);
+    void shouldNotSubmitApplicationCreditCardEmptyInput() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillMonthField("");
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
+
+        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
+        assertNull(new SQLHelper().getCreditRequestStatus());
     }
 
+    // Оплата тура дебетовой картой, номер месяца "00"
     @Test
-    void shouldNotSubmitApplicationWithInvalidMonthFormat() {
+    void shouldNotSubmitApplicationMonthNumberAll0() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
-        paymentPurchasePage.fillMonthField(DataHelper.monthNumberInvalid);
+        paymentPurchasePage.fillMonthField(monthAndYearNumbersIsAll0);
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
+
+        paymentPurchasePage.shouldHaveErrorNotificationInvalidCard();
+        assertNull(new SQLHelper().getPaymentStatus());
     }
 
+    // Оплата тура кредитной картой, номер месяца "00"
     @Test
-    void shouldNotSubmitApplicationWithLongMonth() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
-        paymentPurchasePage.fillMonthField(DataHelper.longMonthInvalid);
+    void shouldNotSubmitApplicationCreditCardMonthNumberAll0() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillMonthField(monthAndYearNumbersIsAll0);
         fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationInvalidCard();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, невалидный номер месяца (спец.символы)
+    @Test
+    void shouldNotSubmitApplicationInvalidMonthNumber() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillMonthField(monthNumberInvalid);
+        fillOtherFieldsByValidInfo();
+
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, невалидный номер месяца (спец.символы)
+    @Test
+    void shouldNotSubmitApplicationCreditCardInvalidMonthNumber() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillMonthField(monthNumberInvalid);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, невалидный номер месяца (13)
+    @Test
+    void shouldNotSubmitApplicationNonExistentMonthNumber() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillMonthField(nonExistentMonthNumber);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationInvalidCard();
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, невалидный номер месяца (13)
+    @Test
+    void shouldNotSubmitApplicationCreditCardNonExistentMonthNumber() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillMonthField(nonExistentMonthNumber);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationInvalidCard();
+        assertNull(new SQLHelper().getCreditRequestStatus());
     }
 
     private void fillOtherFieldsByValidInfo() {
-        paymentPurchasePage.fillYearField(DataHelper.getYear(1));
+        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());     //случайная карта
+        paymentPurchasePage.fillYearField(DataHelper.getYear(1));        //число года следующего за текущим
         paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameEn());
         paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC());
         paymentPurchasePage.clickContinueButton();

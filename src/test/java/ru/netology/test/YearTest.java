@@ -1,15 +1,17 @@
 package ru.netology.test;
 
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
+
 import ru.netology.data.DataHelper;
 import ru.netology.data.SQLHelper;
 import ru.netology.page.PaymentPurchasePage;
 
-import static com.codeborne.selenide.Selenide.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.codeborne.selenide.Selenide.open;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static ru.netology.data.DataHelper.*;
+import static ru.netology.data.SQLHelper.clearTables;
 
 public class YearTest {
     private PaymentPurchasePage paymentPurchasePage;
@@ -17,8 +19,6 @@ public class YearTest {
     @BeforeAll
     static void setUpAll() {
         SelenideLogger.addListener("allure", new AllureSelenide());
-        Configuration.pageLoadTimeout = 30000; // Таймаут загрузки страницы
-        Configuration.headless = true;
     }
 
     @AfterAll
@@ -33,68 +33,147 @@ public class YearTest {
     }
 
     @AfterEach
-    void cleanTables() {
-        SQLHelper.clearTables();
+    public void cleanTables() {
+        clearTables();
     }
 
+    // Оплата тура дебетовой картой, номер года меньше 2 цифр
     @Test
-    void shouldSubmitApplicationWithValidYear() {
+    void shouldNotSubmitApplicationWrongFormatShortYearNumber() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+        paymentPurchasePage.fillYearField(DataHelper.getOneNumber());
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.fillYearField(DataHelper.getYear(1));
-        paymentPurchasePage.clickContinueButton();
-        paymentPurchasePage.shouldShowSuccessNotification();
-        assertEquals("APPROVED", SQLHelper.getPaymentStatus());
-    }
 
-    @Test
-    void shouldNotSubmitApplicationWithEmptyYear() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
-        fillOtherFieldsByValidInfo();
-        paymentPurchasePage.fillYearField("");
-        paymentPurchasePage.clickContinueButton();
-        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(SQLHelper.getPaymentStatus());
-    }
-
-    @Test
-    void shouldNotSubmitApplicationWithAllZeroYear() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
-        fillOtherFieldsByValidInfo();
-        paymentPurchasePage.fillYearField(DataHelper.monthAndYearNumbersIsAll0);
-        paymentPurchasePage.clickContinueButton();
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
+        assertNull(new SQLHelper().getPaymentStatus());
     }
 
+    // Оплата тура кредитной картой, номер года меньше 2 цифр
     @Test
-    void shouldNotSubmitApplicationWithInvalidYearFormat() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+    void shouldNotSubmitApplicationCreditCardWrongFormatShortYearNumber() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillYearField(DataHelper.getOneNumber());
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.fillYearField(DataHelper.yearNumberInvalid);
-        paymentPurchasePage.clickContinueButton();
+
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
+        assertNull(new SQLHelper().getCreditRequestStatus());
     }
 
+    // Оплата тура дебетовой картой, номер года больше 2 цифр
     @Test
-    void shouldNotSubmitApplicationWithExpiredYear() {
+    void shouldNotSubmitApplicationFullYearNumber() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+        paymentPurchasePage.fillYearField(DataHelper.getFullYearNumber(0));
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.fillYearField(DataHelper.getYear(-1));
-        paymentPurchasePage.clickContinueButton();
+
         paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
-        assertNull(SQLHelper.getPaymentStatus());
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, номер года больше 2 цифр
+    @Test
+    void shouldNotSubmitApplicationCreditCardFullYearNumber() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillYearField(DataHelper.getFullYearNumber(0));
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, номер года не указан
+    @Test
+    void shouldNotSubmitApplicationEmptyInput() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillYearField("");
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, номер года не указан
+    @Test
+    void shouldNotSubmitApplicationCreditCardEmptyInput() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillYearField("");
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, номер года "00"
+    @Test
+    void shouldNotSubmitApplicationYearNumberAll0() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillYearField(monthAndYearNumbersIsAll0);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, номер года "00"
+    @Test
+    void shouldNotSubmitApplicationCreditCardYearNumberAll0() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillYearField(monthAndYearNumbersIsAll0);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, невалидный номер года (спец.символы)
+    @Test
+    void shouldNotSubmitApplicationInvalidYearNumber() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillYearField(yearNumberInvalid);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, невалидный номер года (спец.символы)
+    @Test
+    void shouldNotSubmitApplicationCreditCardInvalidYearNumber() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillYearField(yearNumberInvalid);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, прошедший год "23"
+    @Test
+    void shouldNotSubmitApplicationLastYear() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillYearField(getYear(-1));
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, прошедший год "23"
+    @Test
+    void shouldNotSubmitApplicationCreditCardLastYear() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillYearField(getYear(-1));
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
+        assertNull(new SQLHelper().getCreditRequestStatus());
     }
 
     private void fillOtherFieldsByValidInfo() {
-        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));
+        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());     //случайная карта
+        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));       //число месяца следующего за текущим
         paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameEn());
         paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC());
+        paymentPurchasePage.clickContinueButton();
     }
 }

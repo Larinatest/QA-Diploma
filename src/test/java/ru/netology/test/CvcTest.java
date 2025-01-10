@@ -1,15 +1,18 @@
 package ru.netology.test;
 
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.logevents.SelenideLogger;
+
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
+
 import ru.netology.data.DataHelper;
 import ru.netology.data.SQLHelper;
 import ru.netology.page.PaymentPurchasePage;
 
-import static com.codeborne.selenide.Selenide.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.codeborne.selenide.Selenide.open;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static ru.netology.data.DataHelper.*;
+import static ru.netology.data.SQLHelper.clearTables;
 
 public class CvcTest {
     private PaymentPurchasePage paymentPurchasePage;
@@ -17,8 +20,6 @@ public class CvcTest {
     @BeforeAll
     static void setUpAll() {
         SelenideLogger.addListener("allure", new AllureSelenide());
-        Configuration.pageLoadTimeout = 30000; // Таймаут загрузки страницы
-        Configuration.headless = true;
     }
 
     @AfterAll
@@ -33,68 +34,147 @@ public class CvcTest {
     }
 
     @AfterEach
-    void cleanTables() {
-        SQLHelper.clearTables();
+    public void cleanTables() {
+        clearTables();
     }
 
+    // Оплата тура дебетовой картой, одна цифра для CVC
     @Test
-    void shouldSubmitApplicationWithValidCVC() {
+    void shouldNotSubmitApplicationWrongFormatOneDigitForCvc() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+        paymentPurchasePage.fillCvcCvvField(DataHelper.getOneNumber());
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC());
-        paymentPurchasePage.clickContinueButton();
-        paymentPurchasePage.shouldShowSuccessNotification();
-        assertEquals("APPROVED", SQLHelper.getPaymentStatus());
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getPaymentStatus());
     }
 
+    // Оплата тура кредитной картой, одна цифра для CVC
     @Test
-    void shouldNotSubmitApplicationWithEmptyCVC() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+    void shouldNotSubmitApplicationCreditCardWrongFormatOneDigitForCvc() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillCvcCvvField(DataHelper.getOneNumber());
         fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, две цифры для CVC
+    @Test
+    void shouldNotSubmitApplicationWrongFormatTwoDigitsForCvc() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillCvcCvvField(DataHelper.getTwoNumber());
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, две цифры для CVC
+    @Test
+    void shouldNotSubmitApplicationCreditCardWrongFormatTwoDigitsForCvc() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillCvcCvvField(DataHelper.getTwoNumber());
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, номер CVC больше 3 цифр
+    @Test
+    void shouldNotSubmitApplicationLongCvcNumber() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillCvcCvvField(longCvcNumber);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotification();
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, номер CVC больше 3 цифр
+    @Test
+    void shouldNotSubmitApplicationCreditCardLongCvcNumber() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillCvcCvvField(longCvcNumber);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotification();
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, ввод пустого номера CVC
+    @Test
+    void shouldNotSubmitApplicationEmptyInput() {
+        paymentPurchasePage.openCardPaymentPage();
         paymentPurchasePage.fillCvcCvvField("");
-        paymentPurchasePage.clickContinueButton();
+        fillOtherFieldsByValidInfo();
+
         paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(SQLHelper.getPaymentStatus());
+        assertNull(new SQLHelper().getPaymentStatus());
     }
 
+    // Оплата тура кредитной картой, ввод пустого номера CVC
     @Test
-    void shouldNotSubmitApplicationWithAllZeroCVC() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+    void shouldNotSubmitApplicationCreditCardEmptyInput() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillCvcCvvField("");
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.fillCvcCvvField(DataHelper.cvcIsAll0);
-        paymentPurchasePage.clickContinueButton();
-        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
+
+        paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
+        assertNull(new SQLHelper().getCreditRequestStatus());
     }
 
+    // Оплата тура дебетовой картой, номер CVC "000"
     @Test
-    void shouldNotSubmitApplicationWithInvalidCVC() {
+    void shouldNotSubmitApplicationCvcCvvAll0() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+        paymentPurchasePage.fillCvcCvvField(cvcIsAll0);
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.fillCvcCvvField(DataHelper.cvcInvalid);
-        paymentPurchasePage.clickContinueButton();
+
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
+        assertNull(new SQLHelper().getPaymentStatus());
     }
 
+    // Оплата тура кредитной картой, номер CVC "000"
     @Test
-    void shouldNotSubmitApplicationWithLongCVC() {
-        paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillCardNumberField(DataHelper.cardNumberApproved);
+    void shouldNotSubmitApplicationCreditCardCvcAll0() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillCvcCvvField(cvcIsAll0);
         fillOtherFieldsByValidInfo();
-        paymentPurchasePage.fillCvcCvvField(DataHelper.longCvcNumber);
-        paymentPurchasePage.clickContinueButton();
+
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(SQLHelper.getPaymentStatus());
+        assertNull(new SQLHelper().getCreditRequestStatus());
+    }
+
+    // Оплата тура дебетовой картой, невалидный номер CVC (спец.символы)
+    @Test
+    void shouldNotSubmitApplicationInvalidCvcNumber() {
+        paymentPurchasePage.openCardPaymentPage();
+        paymentPurchasePage.fillCvcCvvField(cvcInvalid);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getPaymentStatus());
+    }
+
+    // Оплата тура кредитной картой, невалидный номер CVC (спец.символы)
+    @Test
+    void shouldNotSubmitApplicationCreditCardInvalidCvcNumber() {
+        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.fillCvcCvvField(cvcInvalid);
+        fillOtherFieldsByValidInfo();
+
+        paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
+        assertNull(new SQLHelper().getCreditRequestStatus());
     }
 
     private void fillOtherFieldsByValidInfo() {
-        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));
-        paymentPurchasePage.fillYearField(DataHelper.getYear(1));
+        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());     //случайная карта
+        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));       //число месяца следующего за текущим
+        paymentPurchasePage.fillYearField(DataHelper.getYear(1));        //число года следующего за текущим
         paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameEn());
+        paymentPurchasePage.clickContinueButton();
     }
 }

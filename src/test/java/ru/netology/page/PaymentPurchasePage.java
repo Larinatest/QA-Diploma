@@ -14,7 +14,7 @@ public class PaymentPurchasePage {
     private final SelenideElement creditByButton = $(byText("Купить в кредит"));
     private final SelenideElement cardNumberField = $(".input [placeholder='0000 0000 0000 0000']");
     private final SelenideElement monthField = $(".input [placeholder='01']");
-    private final SelenideElement yearField = $(".input [placeholder='23']");
+    private final SelenideElement yearField = $(".input [placeholder='24']");
     private final SelenideElement ownerField = $(byText("Владелец")).parent().$(".input__control");
     private final SelenideElement cvcField = $(".input [placeholder='123']");
     private final SelenideElement continueButton = $(byText("Продолжить"));
@@ -80,7 +80,7 @@ public class PaymentPurchasePage {
         requiredField.shouldHave(Condition.text("Поле обязательно для заполнения"));
     }
 
-    public void shouldShowErrorNotification() {
-        notification.shouldBe(Condition.text("Ошибка! Банк отказал в проведении операции."), Duration.ofSeconds(15));
+    public void shouldHaveSuccessNotification() {
+        notification.shouldBe(Condition.text("Успешно.Операция одобрена Банком."), Duration.ofSeconds(15));
     }
 }
