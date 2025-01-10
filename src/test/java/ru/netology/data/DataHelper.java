@@ -1,6 +1,8 @@
 package ru.netology.data;
 
 import com.github.javafaker.Faker;
+import lombok.Value;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -19,10 +21,6 @@ public class DataHelper {
     public static final String cvcIsAll0 = "000";
     public static final String cvcInvalid = "*/1";
     public static final String longCvcNumber = "1234";
-
-    public static String getLongOwnerName() {
-        return "A".repeat(300);
-    }
 
     public static String getCardNumberSign16() {
         Faker faker = new Faker();
@@ -76,5 +74,33 @@ public class DataHelper {
         Faker faker = new Faker();
         return faker.number().digits(17);
     }
+    @Value
+    public static class CardInfo {
+        String cardNumber;
+    }
 
+    @Value
+    public static class MonthInfo {
+        String month;
+
+    }
+
+    @Value
+    public static class YearInfo {
+        String year;
+
+    }
+
+    @Value
+    public static class OwnerInfo {
+        String owner;
+
+    }
+
+    @Value
+    public static class CvcInfo {
+        String cvc;
+
+    }
 }
+

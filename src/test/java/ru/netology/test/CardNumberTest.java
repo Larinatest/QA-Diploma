@@ -3,7 +3,6 @@ package ru.netology.test;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
-
 import ru.netology.data.DataHelper;
 import ru.netology.data.SQLHelper;
 import ru.netology.page.PaymentPurchasePage;
@@ -13,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static ru.netology.data.DataHelper.cardNumberAll0;
 import static ru.netology.data.DataHelper.cardNumberInvalid;
 import static ru.netology.data.SQLHelper.clearTables;
+
 
 public class CardNumberTest {
     private PaymentPurchasePage paymentPurchasePage;
@@ -46,7 +46,7 @@ public class CardNumberTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер карты меньше 16 цифр
@@ -68,18 +68,18 @@ public class CardNumberTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotification();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер карты больше 16 цифр
     @Test
     void shouldNotSubmitApplicationLongCreditCardNumber() {
-        paymentPurchasePage.openCreditCardPaymentPage();
+        paymentPurchasePage.openCardPaymentPage();
         paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign17());
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotification();
-        assertNull(new SQLHelper().getCreditRequestStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура дебетовой картой, ввод пустого номера карты
@@ -90,7 +90,7 @@ public class CardNumberTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, ввод пустого номера карты
@@ -112,7 +112,7 @@ public class CardNumberTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер карты "0000 0000 0000 0000"
@@ -134,7 +134,7 @@ public class CardNumberTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, невалидный номер карты (спец.символы)
