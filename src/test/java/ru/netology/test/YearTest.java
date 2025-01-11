@@ -45,7 +45,7 @@ public class YearTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер года меньше 2 цифр
@@ -63,18 +63,18 @@ public class YearTest {
     @Test
     void shouldNotSubmitApplicationFullYearNumber() {
         paymentPurchasePage.openCardPaymentPage();
-        paymentPurchasePage.fillYearField(DataHelper.getFullYearNumber(0));
+        paymentPurchasePage.fillYearField(DataHelper.getFullYearNumber(123));
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер года больше 2 цифр
     @Test
     void shouldNotSubmitApplicationCreditCardFullYearNumber() {
         paymentPurchasePage.openCreditCardPaymentPage();
-        paymentPurchasePage.fillYearField(DataHelper.getFullYearNumber(0));
+        paymentPurchasePage.fillYearField(DataHelper.getFullYearNumber(1234));
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
@@ -89,7 +89,7 @@ public class YearTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер года не указан
@@ -111,7 +111,7 @@ public class YearTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер года "00"
@@ -133,7 +133,7 @@ public class YearTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, невалидный номер года (спец.символы)
@@ -155,7 +155,7 @@ public class YearTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationCardExpired();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, прошедший год "23"
@@ -170,10 +170,10 @@ public class YearTest {
     }
 
     private void fillOtherFieldsByValidInfo() {
-        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());     //случайная карта
-        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));       //число месяца следующего за текущим
+        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());
+        paymentPurchasePage.fillMonthField(DataHelper.getMonth(11));
         paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameEn());
-        paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC());
+        paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC(3));
         paymentPurchasePage.clickContinueButton();
     }
 }

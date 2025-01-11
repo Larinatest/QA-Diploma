@@ -80,5 +80,6 @@ public class PaymentPurchasePage {
         requiredField.shouldHave(Condition.text("Поле обязательно для заполнения"));
     }
 
-}    
+}
+
 

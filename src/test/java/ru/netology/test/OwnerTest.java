@@ -45,7 +45,7 @@ public class OwnerTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, без указания владельца
@@ -67,7 +67,7 @@ public class OwnerTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, недействительный владелец (спец.символы)
@@ -89,7 +89,7 @@ public class OwnerTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, фамилия кириллицей
@@ -111,7 +111,7 @@ public class OwnerTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, двойная фамилия через дефис латинскими буквами
@@ -126,10 +126,10 @@ public class OwnerTest {
     }
 
     private void fillOtherFieldsByValidInfo() {
-        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());     //случайная карта
-        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));       //число месяца следующего за текущим
-        paymentPurchasePage.fillYearField(DataHelper.getYear(1));       //число года следующего за текущим
-        paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC());
+        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());
+        paymentPurchasePage.fillMonthField(DataHelper.getMonth(11));
+        paymentPurchasePage.fillYearField(DataHelper.getYear(25));
+        paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC(3));
         paymentPurchasePage.clickContinueButton();
     }
 }

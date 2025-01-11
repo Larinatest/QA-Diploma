@@ -60,7 +60,7 @@ public class DataHelper {
         return faker.name().lastName();
     }
 
-    public static String getCVC() {
+    public static String getCVC(int i) {
         Faker faker = new Faker();
         return faker.number().digits(3);
     }

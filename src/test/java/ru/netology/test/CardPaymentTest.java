@@ -47,7 +47,7 @@ public class CardPaymentTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveSuccessNotification();
-        assertEquals("APPROVED", new SQLHelper().getPaymentStatus());
+        assertEquals("APPROVED", SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, со статусом "APPROVED"
@@ -69,7 +69,7 @@ public class CardPaymentTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotification();
-        assertEquals("DECLINED", new SQLHelper().getPaymentStatus());
+        assertEquals("DECLINED", SQLHelper.getPaymentStatus());
     }
 
     //Оплата тура кредитной картой, со статусом "DECLINED"
@@ -84,10 +84,10 @@ public class CardPaymentTest {
     }
 
     private void fillOtherFieldsByValidInfo() {
-        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));
-        paymentPurchasePage.fillYearField(DataHelper.getYear(1));
+        paymentPurchasePage.fillMonthField(DataHelper.getMonth(11));
+        paymentPurchasePage.fillYearField(DataHelper.getYear(25));
         paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameEn());
-        paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC());
+        paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC(3));
         paymentPurchasePage.clickContinueButton();
     }
 }

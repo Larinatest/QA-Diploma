@@ -45,7 +45,7 @@ public class MonthTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер месяца меньше двух цифр
@@ -67,7 +67,7 @@ public class MonthTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotification();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер месяца больше двух цифр (123)
@@ -88,7 +88,7 @@ public class MonthTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, ввод номера пустого месяца
@@ -110,7 +110,7 @@ public class MonthTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationInvalidCard();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер месяца "00"
@@ -132,7 +132,7 @@ public class MonthTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, невалидный номер месяца (спец.символы)
@@ -154,7 +154,7 @@ public class MonthTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationInvalidCard();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, невалидный номер месяца (13)
@@ -168,11 +168,11 @@ public class MonthTest {
         assertNull(new SQLHelper().getCreditRequestStatus());
     }
 
-    private void fillOtherFieldsByValidInfo() {
-        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());     //случайная карта
-        paymentPurchasePage.fillYearField(DataHelper.getYear(1));        //число года следующего за текущим
+    public void fillOtherFieldsByValidInfo() {
+        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());
+        paymentPurchasePage.fillYearField(DataHelper.getYear(25));
         paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameEn());
-        paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC());
+        paymentPurchasePage.fillCvcCvvField(DataHelper.getCVC(3));
         paymentPurchasePage.clickContinueButton();
     }
 }

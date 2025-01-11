@@ -46,7 +46,7 @@ public class CvcTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, одна цифра для CVC
@@ -68,7 +68,7 @@ public class CvcTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, две цифры для CVC
@@ -90,7 +90,7 @@ public class CvcTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotification();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер CVC больше 3 цифр
@@ -112,7 +112,7 @@ public class CvcTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationRequiredField();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, ввод пустого номера CVC
@@ -134,7 +134,7 @@ public class CvcTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, номер CVC "000"
@@ -156,7 +156,7 @@ public class CvcTest {
         fillOtherFieldsByValidInfo();
 
         paymentPurchasePage.shouldHaveErrorNotificationWrongFormat();
-        assertNull(new SQLHelper().getPaymentStatus());
+        assertNull(SQLHelper.getPaymentStatus());
     }
 
     // Оплата тура кредитной картой, невалидный номер CVC (спец.символы)
@@ -171,9 +171,9 @@ public class CvcTest {
     }
 
     private void fillOtherFieldsByValidInfo() {
-        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());     //случайная карта
-        paymentPurchasePage.fillMonthField(DataHelper.getMonth(1));       //число месяца следующего за текущим
-        paymentPurchasePage.fillYearField(DataHelper.getYear(1));        //число года следующего за текущим
+        paymentPurchasePage.fillCardNumberField(DataHelper.getCardNumberSign16());
+        paymentPurchasePage.fillMonthField(DataHelper.getMonth(11));
+        paymentPurchasePage.fillYearField(DataHelper.getYear(25));
         paymentPurchasePage.fillOwnerField(DataHelper.getOwnerFullNameEn());
         paymentPurchasePage.clickContinueButton();
     }
